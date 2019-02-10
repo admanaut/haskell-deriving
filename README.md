@@ -198,8 +198,96 @@ data Empty deriving (Show)
 
 
 # Deriving strategies
-## Stock
 
-## Newtype
+Allow multiple deriving, each optionally qualified with a strategy.
 
-## Via
+In the following example
+
+```
+{-# LANGUAGE DeriveAnyClass, GeneralizedNewtypeDeriving #-}
+newtype Foo = MkFoo Bar deriving C
+```
+
+one could pick the DeriveAnyClass or GeneralizedNewtypeDeriving approach,
+both eqully valid. To make this more robust, GHC has a notion of deriving strategies,
+which allow the user to explicitly request which approach to use when deriving an instance.
+
+
+```
+{-# LANGUAGE DerivingStrategies #-}
+
+newtype Foo = MkFoo Bar
+  deriving newtype C
+
+-- or standalone
+deriving anyclass instance C Foo
+
+
+-- or, multiple deriving clauses
+newtype Baz = Baz Quux
+  deriving          (Eq, Ord)
+  deriving stock    (Read, Show)
+  deriving newtype  (Num, Floating)
+  deriving anyclass C
+```
+
+current strategies:
+* stock    - standard instance like Eq, Ord, Data, Functor etc
+* anyclass - use DeriveAnyClass,
+* newtype  - use GeneralizedNewtypeDeriving
+* via
+
+## Deriving Via
+
+https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#deriving-via
+
+This allows deriving a class instance for a type by specifying another type of equal runtime
+representation (such that there exists a Coercible instance between the two) that
+is already an instance of the that class.
+
+```
+{-# LANGUAGE DerivingVia #-}
+
+import Numeric
+
+newtype Hex a = Hex a
+
+instance (Integral a, Show a) => Show (Hex a) where
+  show (Hex a) = "0x" ++ showHex a ""
+
+newtype Unicode = U Int
+  deriving Show
+    via (Hex Int)
+
+-- >>> euroSign
+-- 0x20ac
+euroSign :: Unicode
+euroSign = U 0x20ac
+```
+
+Generates the following instance
+
+```
+instance Show Unicode where
+  show :: Unicode -> String
+  show = Data.Coerce.coerce
+    @(Hex Int -> String)
+    @(Unicode -> String)
+    show
+```
+
+This extension generalizes GeneralizedNewtypeDeriving. To derive Num Unicode
+with GND (deriving newtype Num) it must reuse the Num Int instance.
+With DerivingVia, we can explicitly specify the representation type Int:
+
+```
+newtype Unicode = U Int
+  deriving Num
+    via Int
+
+  deriving Show
+    via (Hex Int)
+
+euroSign :: Unicode
+euroSign = 0x20ac
+```

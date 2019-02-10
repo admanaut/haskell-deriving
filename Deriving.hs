@@ -1,5 +1,6 @@
 import Data.Typeable
 import GHC.Generics
+import Numeric
 
 {-
 Manually deriving instances
@@ -156,6 +157,7 @@ GeneralizedNewtypeDeriving extension
 
 - derives non base classes, like Num
 -}
+
 newtype Dollars = Dollars Int deriving (Show, Eq, Ord, Bounded, Num)
 
 {-
@@ -173,6 +175,8 @@ newtype Dollars = Dollars Int deriving (Show, Eq, Ord, Bounded, Num)
       = coerce @(Integer -> Int) @(Integer -> Dollars) fromInteger
 -}
 
+-- equivalent to
+-- instance Num Int => Num Dollars
 
 {-# LANGUAGE EmptyDataDeriving #-}
 {-
@@ -188,3 +192,41 @@ data Empty deriving (Show)
 instance Show Empty where
   showsPrec _ z = case z of
 -}
+
+{-# LANGUAGE DerivingVia, DerivingStrategies #-}
+
+newtype Hex a = Hex a
+
+instance (Integral a, Show a) => Show (Hex a) where
+  show (Hex a) = "0x" ++ showHex a ""
+
+newtype Unicode = U Int
+  deriving Show
+    via (Hex Int)
+
+-- >>> euroSign
+-- 0x20ac
+euroSign :: Unicode
+euroSign = U 0x20ac
+
+-- Generates the following instance
+
+{-
+instance Show Unicode where
+  show :: Unicode -> String
+  show = Data.Coerce.coerce
+    @(Hex Int -> String)
+    @(Unicode -> String)
+    show
+-}
+
+
+newtype Unicode = U Int
+  deriving Num
+    via Int
+
+  deriving Show
+    via (Hex Int)
+
+euroSign :: Unicode
+euroSign = 0x20ac
