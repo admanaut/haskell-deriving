@@ -68,6 +68,23 @@ https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.htm
 Haskell 98 allows derivation only of Eq, Ord, Enum, Ix, Bounded, Read,
 and Show classes, but GHC extends this with:
 
+## DeriveAnyClass
+
+https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#deriving-any-other-class
+
+Allow use of any typeclass in deriving clauses.
+
+```
+{-# LANGUAGE DeriveAnyClass, DefaultSignatures #-}
+
+class SPretty a where
+  sPpr :: a -> String
+  default sPpr :: Show a => a -> String
+  sPpr = show
+
+data Foo = Foo deriving (Show, SPretty)
+```
+
 ## DeriveGeneric
 
 https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/glasgow_exts.html#extension-DeriveGeneric

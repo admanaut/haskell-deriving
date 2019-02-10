@@ -20,6 +20,24 @@ data Bar = Bar { bbaz :: Integer } deriving Eq
 -- GHC deriving extensions -
 -- ----------------------- -
 
+{- @DeriveAnyClass@ extension -}
+
+{-# LANGUAGE DeriveAnyClass, DefaultSignatures #-}
+
+class SPretty a where
+  sPpr :: a -> String
+  default sPpr :: Show a => a -> String
+  sPpr = show
+
+data Foo = Foo deriving (Show, SPretty)
+
+{-
+instance Show Foo where
+  showsPrec _ Foo = showString "Foo"
+
+instance SPretty Foo where
+-}
+
 {- @DeriveFunctor@ extension -}
 
 {-# LANGUAGE DeriveFunctor #-}
@@ -125,12 +143,14 @@ Derived type family instances:
 - more specific
 -}
 
-{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE StandaloneDeriving #-}
+
 data Standalone a = Standalone { lone :: Maybe a}
 
 deriving instance Eq a => Eq (Standalone a)
 
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 {-
 GeneralizedNewtypeDeriving extension
 
