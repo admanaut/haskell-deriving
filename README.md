@@ -1,5 +1,9 @@
 # Deriving in Haskell
 
+### GHC version
+
+GHC 8.6.1 or newer is required to run all these examples
+
 ## visualising automagically derived instances
 
 If you are like me and need to see the actual code that gets generated
